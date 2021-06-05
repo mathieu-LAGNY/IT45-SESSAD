@@ -70,5 +70,17 @@ public class Chromosome {
         return result;
     }
 
+    public double getFitness() {
+        return fitness;
+    }
+
+    @Override
+    public String toString() {
+        String string = "fitness = " + fitness + " => " + genes[0];
+        for(int i=1;i<taille;i++)
+            string += "_" + genes[i];
+        return string;
+    }
+
     // OPERATEURS DE MUTATION
 }

@@ -136,12 +136,11 @@ public class JavaIG {
                 "\n  formations   = \n" + formations;
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        JavaIG javaIG = new JavaIG();
-        System.out.println(javaIG);
+    public int getNbFormations() {
+        return NBR_FORMATIONS;
     }
 
+    public int getNbInterfaces() {
+        return NBR_INTERFACES;
+    }
 }
