@@ -49,7 +49,7 @@ public class JavaIG {
 
     private ArrayList<Formation> formations;
 
-    Random rand;
+    private Random rand;
 
     public JavaIG() {
         rand = new Random();
