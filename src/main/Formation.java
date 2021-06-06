@@ -24,4 +24,50 @@ public class Formation {
                 ", hfin = " + hfin +
                 "\n";
     }
+
+    public void affichageTableau() {
+        String string = " j " + jour + " d " + hdebut;
+        if (competence == 0) string += " signe ";
+        else string += " codage ";
+        string += competence + "spe " + specialite + " f " + hfin;
+        System.out.println(string);
+    }
+
+    public int getSpecialite() {
+        return specialite;
+    }
+
+    public int getCompetence() {
+        return competence;
+    }
+
+    public int getJour() {
+        return jour;
+    }
+
+    // comparaison sur le debut de la formation
+    public boolean precede(Formation f) {
+        if (this.jour < f.jour) return true;
+        if (this.jour == f.jour)
+            return this.hdebut < f.hdebut;
+        // tout les autres cas sont faux
+        return false;
+    }
+
+    // verification que deux missions ne se chevauchent pas
+    // le debut d'une formation ne peut pas être en même temps ou avant la fin de la suivante
+    public boolean compatible(Formation f) {
+        if (this.jour != f.jour) return true;
+        if (this.hdebut < f.hdebut)
+            return this.hfin < f.hdebut;
+        else return f.hfin < this.hdebut;
+    }
+
+    public int getHdebut() {
+        return hdebut;
+    }
+
+    public int getHfin() {
+        return hfin;
+    }
 }
