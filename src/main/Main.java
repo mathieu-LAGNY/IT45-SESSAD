@@ -1,16 +1,19 @@
 package main;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
-        int nb_generation = 10000;
-        int taille_population = 100;
+        Instant start = Instant.now();
+        int nb_generation = 1;
+        int taille_population = 1;
         double taux_croisement = 0.8;
         double taux_mutation = 0.5;
 
         // variable pour tester l'efficacité des paramètres
-        int nb_test = 50;
+        int nb_test = 1;
         JavaIG javaIG = new JavaIG();
 
         Ae algo;
@@ -23,14 +26,16 @@ public class Main {
         best = algo.optimiser();
         moy += best.getFitness();
         fit[0] = best.getFitness();
-        double min = best.getFitness();
+        Chromosome min = best;
         for (int i = 1; i < nb_test; i++) {
             // lance l'algorithme évolutionniste
             algo = new Ae(nb_generation, taille_population, taux_croisement, taux_mutation, javaIG);
             best = algo.optimiser();
             moy += best.getFitness();
             fit[i] = best.getFitness();
-            if (best.getFitness() < min) min = best.getFitness();
+            if (best.getFitness() < min.getFitness()) {
+                min = best;
+            }
             // affiche la fitness du meilleur individu trouvé
             // System.out.println("La meilleure solution trouvee est : ");
             // best.affichageSolution();
@@ -47,6 +52,9 @@ public class Main {
         ecart = Math.sqrt(ecart);
         System.out.println(ecart);
 
-        System.out.println(moy-min);
+        min.affichageSolution();
+        Instant end = Instant.now();
+        Duration timeElapsed = Duration.between(start, end);
+        System.out.println("Time taken: "+ timeElapsed.toMillis() +" milliseconds");
     }
 }

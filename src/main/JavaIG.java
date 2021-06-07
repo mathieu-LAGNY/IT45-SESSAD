@@ -167,7 +167,7 @@ public class JavaIG {
         for (Formation form: formations) {
             if (form.getCompetence() == 0) {
                 signes.add(form);
-            } else signes.add(form);
+            } else codage.add(form);
         }
         int i = 0;
         for (Formation form: signes) {

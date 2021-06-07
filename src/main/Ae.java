@@ -69,7 +69,7 @@ public class Ae {
                 if (rand.nextInt(1000) / 1000.0 < taux_mutation)
                     fils2.echange_2_genes_consecutifs();
 
-                invalide = fils1.valide() && fils1.valide();
+                invalide = !fils1.valide() || !fils1.valide();
             }
 
             // évaluation des deux nouveaux individus générés
@@ -80,7 +80,7 @@ public class Ae {
             pop.remplacement_roulette(fils1);
             pop.remplacement_roulette(fils2);
 
-            // On réordonne la population selon la fitness
+            // On ordonne la population selon la fitness
             pop.ordonner();
 
             // Si l'un des nouveaux individus-solutions est le meilleur jamais rencontré

@@ -29,7 +29,7 @@ public class Formation {
         String string = " j " + jour + " d " + hdebut;
         if (competence == 0) string += " signe ";
         else string += " codage ";
-        string += competence + "spe " + specialite + " f " + hfin;
+        string += " f " + hfin;
         System.out.println(string);
     }
 
