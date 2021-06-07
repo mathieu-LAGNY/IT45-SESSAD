@@ -41,16 +41,18 @@ public class JavaIG {
             "SAMEDI"));
 
     private ArrayList<Interface> interfaces;
-    // les vues sont des listes en lecture seule
 
     // indices de début des interfaces ayant une double competence
-    private int iDouble;
+    private int i_iDouble;
     // indices de début des interfaces ayant la competence signes
-    private int iSignes;
+    private int i_iCodage;
 
+    // coordonnees du sessad et des centres
     private final float[][] coord;
 
     private final ArrayList<Formation> formations;
+    // indices de début des formations necessitant la competence codage
+    private int i_fCodage;
 
     private Random rand;
 
@@ -141,18 +143,39 @@ public class JavaIG {
             } else signes.add(inter);
         }
         int i = 0;
-        for (Interface inter: codage) {
+        for (Interface inter: signes) {
             interfaces.set(i, inter);
             i ++;
         }
-        this.iDouble = i;
+        this.i_iDouble = i;
         for (Interface inter: both) {
             interfaces.set(i, inter);
             i ++;
         }
-        this.iSignes = i;
-        for (Interface inter: signes) {
+        this.i_iCodage = i;
+        for (Interface inter: codage) {
             interfaces.set(i, inter);
+            i ++;
+        }
+    }
+
+    // les formations sont triées, signes, et ensuite codage
+    private void trierFormations() {
+        ArrayList<Formation> codage = new ArrayList<>();
+        ArrayList<Formation> signes = new ArrayList<>();
+        for (Formation form: formations) {
+            if (form.getCompetence() == 0) {
+                signes.add(form);
+            } else signes.add(form);
+        }
+        int i = 0;
+        for (Formation form: signes) {
+            formations.set(i, form);
+            i ++;
+        }
+        this.i_fCodage = i;
+        for (Formation form: codage) {
+            formations.set(i, form);
             i ++;
         }
     }
@@ -197,11 +220,15 @@ public class JavaIG {
         return copy;
     }
 
-    public int getiDouble() {
-        return iDouble;
+    public int getI_iDouble() {
+        return i_iDouble;
     }
 
-    public int getiSignes() {
-        return iSignes;
+    public int getI_iCodage() {
+        return i_iCodage;
+    }
+
+    public int getI_fCodage() {
+        return i_fCodage;
     }
 }
