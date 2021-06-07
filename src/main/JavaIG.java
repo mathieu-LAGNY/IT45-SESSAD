@@ -66,6 +66,7 @@ public class JavaIG {
         coordCentresEtSESSAD();
         createFormations();
         trierInterfaces();
+        trierFormations();
     }
 
     // competences des interfaces en SIGNES et CODAGE
