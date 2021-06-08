@@ -7,8 +7,8 @@ import java.util.Arrays;
 public class Main {
     public static void main(String[] args) {
         Instant start = Instant.now();
-        int nb_generation = 1;
-        int taille_population = 1;
+        int nb_generation = 50;
+        int taille_population = 20;
         double taux_croisement = 0.8;
         double taux_mutation = 0.5;
 
@@ -53,6 +53,7 @@ public class Main {
         System.out.println(ecart);
 
         min.affichageSolution();
+        System.out.println(min.valide());
         Instant end = Instant.now();
         Duration timeElapsed = Duration.between(start, end);
         System.out.println("Time taken: "+ timeElapsed.toMillis() +" milliseconds");

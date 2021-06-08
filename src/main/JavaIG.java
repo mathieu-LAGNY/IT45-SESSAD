@@ -50,6 +50,9 @@ public class JavaIG {
     // coordonnees du sessad et des centres
     private final float[][] coord;
 
+    // matrice de compatibilite des formations
+    private final boolean[][] compatibilite;
+
     private final ArrayList<Formation> formations;
     // indices de début des formations necessitant la competence codage
     private int i_fCodage;
@@ -61,12 +64,14 @@ public class JavaIG {
         interfaces = new ArrayList<>();
         formations = new ArrayList<>();
         coord = new float[NBR_CENTRES_FORMATION+1][2];
+        compatibilite = new boolean[NBR_FORMATIONS][NBR_FORMATIONS];
 
         createInterfaces();
         coordCentresEtSESSAD();
         createFormations();
         trierInterfaces();
         trierFormations();
+        createCompatibilite();
     }
 
     // competences des interfaces en SIGNES et CODAGE
@@ -181,6 +186,19 @@ public class JavaIG {
         }
     }
 
+    private void createCompatibilite() {
+        int i = 0;
+        int j;
+        for (Formation f1 : formations) {
+            j = 0;
+            for (Formation f2 : formations) {
+                compatibilite[i][j] = f1.compatible(f2);
+                j++;
+            }
+            i++;
+        }
+    }
+
     @Override
     public String toString() {
         return  "  interfaces   = \n" + interfaces +
@@ -212,6 +230,10 @@ public class JavaIG {
 
     protected ArrayList<Formation> getFormations() {
         return new ArrayList<Formation>(formations);
+    }
+
+    public boolean[][] getCompatibilite() {
+        return compatibilite;
     }
 
     protected ArrayList<ArrayList<Float>> getCoord() {

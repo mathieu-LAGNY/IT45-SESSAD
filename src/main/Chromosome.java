@@ -22,8 +22,8 @@ public class Chromosome {
 
     // constructeur aléatoire
     public Chromosome(JavaIG instance) {
-        this.taille = instance.getNbFormations();
         this.instance = instance;
+        this.taille = instance.getNbFormations();
         this.penalite = 0;
         this.genes = new int[taille];
         // un chromosome est composé de 'taille' gènes,
@@ -37,10 +37,12 @@ public class Chromosome {
         boolean recommence = true;
         while(recommence) {
             for(int i=0; i<taille; i++) {
-                // on tire aléatoirement le gène suivante
-                genes[i] = rand.nextInt(max_value);
+                // on tire aléatoirement le gène suivant parmi les interfaces ayant la bonne competence
+                if (i < instance.getI_fCodage())
+                    genes[i] = rand.nextInt(instance.getI_iCodage());
+                else genes[i] = instance.getI_iDouble() + rand.nextInt(max_value - instance.getI_iDouble());
             }
-            recommence = this.valide();
+            recommence = !this.valide();
         }
         calculerPenalite();
         evaluer();
@@ -245,19 +247,14 @@ public class Chromosome {
     //   Elle doit etre lancée à la creation des solution et apres
     //   l'exécution des operateurs de mutation et de croisement
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Chromosome that = (Chromosome) o;
-        return taille == that.taille && Double.compare(that.fitness, fitness) == 0 && Arrays.equals(genes, that.genes);
-    }
 
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(taille, fitness);
-        result = 31 * result + Arrays.hashCode(genes);
-        return result;
+    public boolean egal(Chromosome c) {
+        if (this == c) return true;
+        if (c == null || getClass() != c.getClass()) return false;
+        for (int i=0; i < this.taille; i++) {
+            if (genes[i] != c.genes[i]) return false;
+        }
+        return true;
     }
 
     public double getFitness() {
@@ -266,6 +263,55 @@ public class Chromosome {
 
     public int[] getGenes() {
         return genes.clone();
+    }
+
+    public void setGene(int i, int value) {
+        genes[i] = value;
+    }
+
+    // opérateur de croisement compatible avec le planning
+    public void croisementPC(Chromosome enfant2) {
+        boolean[][] compatibilite = instance.getCompatibilite();
+
+        Chromosome enfant1 = this;
+
+        // copie des genes des parents
+        int[] c_p1 = enfant1.getGenes();
+        int[] c_p2 = enfant2.getGenes();
+
+        int nbEchange = rand.nextInt(taille /2);
+
+        ArrayList<Integer> imission = new ArrayList<>();
+
+        int[] genes2 = enfant2.getGenes();
+        for (int i=0; i < taille; i++)
+            imission.add(i);
+
+        int i; // indice de la mission tirée au sort
+        int j;
+        boolean compatible;
+
+        while (nbEchange > 0) {
+            i = imission.remove(rand.nextInt(imission.size()));
+            compatible = true;
+
+            // pour chaque mission
+            j = 0;
+            while (compatible && j < taille) {
+                // test de selection de formation correspondant à l'interface de la formation tirée
+                if (genes[j] == genes2[i] || genes2[j] == genes[i]) {
+                    // test de compatibilité planning
+                    if (!compatibilite[j][i])
+                        compatible = false;
+                }
+                j++;
+            }
+            if (compatible) {
+                enfant1.setGene(i, c_p2[i]);
+                enfant2.setGene(i, c_p1[i]);
+            }
+            nbEchange --;
+        }
     }
 
     public void affichageSolution() {

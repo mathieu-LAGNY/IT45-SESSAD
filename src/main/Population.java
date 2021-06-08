@@ -15,12 +15,15 @@ public class Population {
     private Random rand = new Random();;
 
     public Population(int taille_pop, JavaIG instance) {
-        this.individus = new ArrayList<>();
+        System.out.println("pop");
         this.taille_pop = taille_pop;
+        this.individus = new ArrayList<>();
         this.ordre = new int[taille_pop];
         for(int i=0; i<taille_pop; i++) {
             ordre[i] = i;
-            this.individus.add(new Chromosome(instance));
+            Chromosome c = new Chromosome(instance);
+            this.individus.add(c);
+            System.out.println(i);
         }
         ordonner();
     }
@@ -42,6 +45,17 @@ public class Population {
         }
     }
 
+    public boolean valide() {
+        boolean val = true;
+        for (Chromosome individu: individus) {
+            if(!individu.valide()) {
+                individu.affichageSolution();
+                val = false;
+            }
+        }
+        return val;
+    }
+
     public double getBestFitness() {
         return individus.get(ordre[0]).getFitness();
     }
@@ -50,29 +64,66 @@ public class Population {
         return individus.get(ordre[0]);
     }
 
+    private void quickSort(double[] arr, int begin, int end) {
+        if (begin < end) {
+            int partitionIndex = partition(arr, begin, end);
+
+            quickSort(arr, begin, partitionIndex-1);
+            quickSort(arr, partitionIndex+1, end);
+        }
+    }
+
+    private int partition(double[] arr, int begin, int end) {
+        double pivot = arr[end];
+        double swapTemp;
+        int i = (begin-1);
+        for (int j = begin; j < end; j++) {
+            if (arr[j] > pivot) {
+                i++;
+
+                swapTemp = arr[i];
+                arr[i] =  arr[j];
+                arr[j] = swapTemp;
+            }
+        }
+        swapTemp = arr[i + 1];
+        arr[i + 1] =  arr[end];
+        arr[end] = swapTemp;
+
+        return i+1;
+    }
+
     // SELECTION PAR ROULETTE BIAISEE
 //opérateur de sélection basé sur la fonction fitness
     public Chromosome selection_roulette() {
-        double somme_fitness = individus.get(0).getFitness();
-        double fitness_max   = individus.get(0).getFitness();
-        double somme_portion;
+        double somme_fitness = 0;
+        double max_fitness = 0;
+        double[] roulette = new double[this.taille_pop];
 
-        for(int i=1; i<taille_pop; i++) {
-            somme_fitness += individus.get(i).getFitness();
-            if (fitness_max < individus.get(i).getFitness())
-                fitness_max = individus.get(i).getFitness();
+        for(int i=0; i<taille_pop; i++) {
+            roulette[i] = individus.get(i).getFitness();
+            somme_fitness += roulette[i];
+            if (roulette[i] > max_fitness)
+                max_fitness = roulette[i];
         }
-        somme_portion = fitness_max*taille_pop - somme_fitness;
+
+        quickSort(roulette, 0, roulette.length-1);
+
+        somme_fitness = max_fitness * this.taille_pop - somme_fitness;
+        roulette[taille_pop - 1] = (max_fitness - roulette[taille_pop - 1]) / somme_fitness;
+        for(int i = taille_pop - 2; i >= 0; i--) {
+            roulette[i] = (max_fitness - roulette[i]) / somme_fitness;
+            roulette[i] = roulette[i] + roulette[i + 1];
+        }
 
         double variable_alea = rand.nextInt(1000)/1000.0;
 
-        int ind = 0;
-        double portion = (fitness_max - individus.get(0).getFitness()) /somme_portion;
-        while ((ind<taille_pop-1) && (variable_alea>=portion)) {
-            ind++;
-            portion += (fitness_max - individus.get(ind).getFitness()) /somme_portion;
+        for(int i = taille_pop - 1; i > 0; i--) {
+            if (roulette[i] > variable_alea) {
+                return individus.get(i - 1);
+            }
         }
-        return individus.get(ind);
+        return individus.get(0);
     }
 
 // opérateur de remplacement basé sur la roulette biaisée d'un individu de la population
@@ -167,6 +218,11 @@ public class Population {
         return string;
     }
 
+    public void afficher() {
+        for (Chromosome c: this.individus)
+            System.out.println(Arrays.toString(c.getGenes()));
+    }
+
     // statistiques sur la population
     public void statistiques() {
         this.ordonner();
@@ -213,5 +269,9 @@ public class Population {
             if (chro.equals(individus.get(i)))
                 nb++;
         return nb;
+    }
+
+    public int getTaille_pop() {
+        return this.individus.size();
     }
 }
