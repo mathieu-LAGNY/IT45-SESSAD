@@ -10,12 +10,10 @@ public class Population {
     private final int taille_pop;
     private int[] ordre;
 
-    private JavaIG instance;
-
-    private Random rand = new Random();;
+    private Random rand;
 
     public Population(int taille_pop, JavaIG instance) {
-        System.out.println("pop");
+        rand = new Random();
         this.taille_pop = taille_pop;
         this.individus = new ArrayList<>();
         this.ordre = new int[taille_pop];
@@ -23,11 +21,24 @@ public class Population {
             ordre[i] = i;
             Chromosome c = new Chromosome(instance);
             this.individus.add(c);
-            System.out.println(i);
         }
         ordonner();
     }
 
+    public Population (Population p) {
+        rand = new Random();
+        this.taille_pop = p.taille_pop;
+        this.individus = new ArrayList<>();
+        this.ordre = new int[taille_pop];
+        for(int i=0; i<taille_pop; i++) {
+            ordre[i] = i;
+            Chromosome c = p.individus.get(i);
+            this.individus.add(c);
+        }
+        ordonner();
+    }
+
+    // tri par ordre croissant de fitness
     public void ordonner() {
         int inter;
         for(int i=0; i<taille_pop-1; i++)
@@ -39,17 +50,18 @@ public class Population {
                 }
     }
 
+    // evalue tous les individus
     public void evaluer() {
         for (Chromosome individu: individus) {
             individu.evaluer();
         }
     }
 
+    // teste la validité de tous les individus
     public boolean valide() {
         boolean val = true;
         for (Chromosome individu: individus) {
             if(!individu.valide()) {
-                individu.affichageSolution();
                 val = false;
             }
         }
@@ -96,34 +108,26 @@ public class Population {
     // SELECTION PAR ROULETTE BIAISEE
 //opérateur de sélection basé sur la fonction fitness
     public Chromosome selection_roulette() {
-        double somme_fitness = 0;
-        double max_fitness = 0;
-        double[] roulette = new double[this.taille_pop];
+        double somme_fitness = individus.get(0).getFitness();
+        double fitness_max   = individus.get(0).getFitness();
+        double somme_portion;
 
-        for(int i=0; i<taille_pop; i++) {
-            roulette[i] = individus.get(i).getFitness();
-            somme_fitness += roulette[i];
-            if (roulette[i] > max_fitness)
-                max_fitness = roulette[i];
+        for(int i=1; i<taille_pop; i++) {
+            somme_fitness += individus.get(i).getFitness();
+            if (fitness_max < individus.get(i).getFitness())
+            fitness_max = individus.get(i).getFitness();
         }
-
-        quickSort(roulette, 0, roulette.length-1);
-
-        somme_fitness = max_fitness * this.taille_pop - somme_fitness;
-        roulette[taille_pop - 1] = (max_fitness - roulette[taille_pop - 1]) / somme_fitness;
-        for(int i = taille_pop - 2; i >= 0; i--) {
-            roulette[i] = (max_fitness - roulette[i]) / somme_fitness;
-            roulette[i] = roulette[i] + roulette[i + 1];
-        }
+        somme_portion = fitness_max*taille_pop - somme_fitness;
 
         double variable_alea = rand.nextInt(1000)/1000.0;
 
-        for(int i = taille_pop - 1; i > 0; i--) {
-            if (roulette[i] > variable_alea) {
-                return individus.get(i - 1);
-            }
+        int ind = 0;
+        double portion = (fitness_max - individus.get(0).getFitness()) /somme_portion;
+        while ((ind<taille_pop-1) && (variable_alea>=portion)) {
+            ind++;
+            portion += (fitness_max - individus.get(ind).getFitness()) /somme_portion;
         }
-        return individus.get(0);
+        return individus.get(ind);
     }
 
 // opérateur de remplacement basé sur la roulette biaisée d'un individu de la population
@@ -137,8 +141,8 @@ public class Population {
         int ind = ordre[0];
         double portion;
 
-        while (ordre[0]==ind)
-        {
+        // on garde le meilleur individu
+        while (ordre[0]==ind) {
             variable_alea = rand.nextInt(1000)/1000.0;
             ind = 0;
             portion = individus.get(0).getFitness() /somme_fitness;
@@ -160,8 +164,9 @@ public class Population {
 // opérateur de remplacement alétoire d'un individu de la population
 //   par un nouveau individu donné en argument
     public void remplacement_aleatoire(Chromosome individu) {
-        int ind_alea = rand.nextInt(taille_pop);
-        individus.set(ind_alea, new Chromosome(individu));
+        // on conserve le meilleur individu
+        int ind_alea = rand.nextInt(taille_pop-1)+1;
+        individus.set(ordre[ind_alea], new Chromosome(individu));
     }
 
 // SELECTION PAR RANKING
@@ -202,8 +207,9 @@ public class Population {
             i++;
             portion += ((i*2.0/(T*(T-1)))+taux_ranking)/(1.0+T*taux_ranking);
         }
-        if(i>=T)
-            i = rand.nextInt(T);
+        // on garde le meilleur individu
+        if(i>=T || i == 0)
+            i = rand.nextInt(T-1)+1;
         int ind = ordre[i];
         individus.set(ind, new Chromosome(individu));
     }
@@ -212,8 +218,7 @@ public class Population {
     public String toString() {
         String string = "Population de " + taille_pop + " individus :\n";
         for (int i=0; i<taille_pop; i++) {
-            string += "individu " + i + ", rang : " + ordre[i] + "\n";
-            string += individus.get(i) + "\n";
+            string += "i= " + i + " " + individus.get(ordre[i]).getFitness() + "\n";
         }
         return string;
     }
@@ -248,15 +253,15 @@ public class Population {
     // Similitude de la population
     public void similitude() {
         int nb_ind_id_1, nb_ind_id_2, nb_ind_id_3;
-        nb_ind_id_1 = nb_chromosomes_similaires(individus.get(ordre[0]));
+        nb_ind_id_1 = nb_solutions_similaires(individus.get(ordre[0]));
         System.out.println("Nombre d'individus de la population identique ayant la fitness = " + individus.get(ordre[0]).getFitness() + " : " + nb_ind_id_1 + " / " + taille_pop + "\n");
         if (nb_ind_id_1<taille_pop)
         {
-            nb_ind_id_2 = nb_chromosomes_similaires(individus.get(ordre[nb_ind_id_1]));
+            nb_ind_id_2 = nb_solutions_similaires(individus.get(ordre[nb_ind_id_1]));
             System.out.println("Nombre d'individus de la population identique ayant la fitness = " + individus.get(ordre[nb_ind_id_1]).getFitness() + " : " + nb_ind_id_2 + " / " + taille_pop + "\n");
             if (nb_ind_id_1+nb_ind_id_2<taille_pop)
             {
-                nb_ind_id_3 = nb_chromosomes_similaires(individus.get(ordre[nb_ind_id_1 + nb_ind_id_2]));
+                nb_ind_id_3 = nb_solutions_similaires(individus.get(ordre[nb_ind_id_1 + nb_ind_id_2]));
                 System.out.println("Nombre d'individus de la population identique ayant la fitness = " + individus.get(ordre[nb_ind_id_1 + nb_ind_id_2]).getFitness() + " : " + nb_ind_id_3 + " / " + taille_pop + "\n");
             }
         }
@@ -265,9 +270,22 @@ public class Population {
     // compte le nombre de chromosomes similaires
     public int nb_chromosomes_similaires(Chromosome chro) {
         int nb = 0;
-        for (int i=0; i<taille_pop; i++)
-            if (chro.equals(individus.get(i)))
+        for (int i=0; i<taille_pop; i++) {
+            if (Arrays.equals(chro.getGenes(), individus.get(i).getGenes())) {
                 nb++;
+            }
+        }
+        return nb;
+    }
+
+    // compte le nombre de solutions avec une fitness similaire
+    public int nb_solutions_similaires(Chromosome chro) {
+        int nb = 0;
+        for (int i=0; i<taille_pop; i++) {
+            if (Math.abs(chro.getFitness() - individus.get(i).getFitness()) < 0.0001) {
+                nb++;
+            }
+        }
         return nb;
     }
 

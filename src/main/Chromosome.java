@@ -1,12 +1,6 @@
 package main;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Random;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import java.util.*;
 
 public class Chromosome {
     private int taille; // la taille du chromosome = nombre de gènes = nbFormations
@@ -18,7 +12,7 @@ public class Chromosome {
     private float[] distances;
     private int penalite;
 
-    Random rand = new Random();
+    Random rand;
 
     // constructeur aléatoire
     public Chromosome(JavaIG instance) {
@@ -26,6 +20,7 @@ public class Chromosome {
         this.taille = instance.getNbFormations();
         this.penalite = 0;
         this.genes = new int[taille];
+        rand = new Random();
         // un chromosome est composé de 'taille' gènes,
         // les gènes sont caratérisé par un entier compris entre 0 et 'max_value'
         this.max_value = instance.getNbInterfaces();
@@ -34,6 +29,15 @@ public class Chromosome {
         for(int i=0; i<max_value; i++)
             this.distances[i] = 0;
 
+        // genereSolutionAleatoire();
+        genereSolutionSemiDirige();
+
+        evaluer();
+        genererDistances();
+    }
+
+    //  constructeur aléatoire de la solution
+    private void genereSolutionAleatoire() {
         boolean recommence = true;
         while(recommence) {
             for(int i=0; i<taille; i++) {
@@ -44,23 +48,65 @@ public class Chromosome {
             }
             recommence = !this.valide();
         }
-        calculerPenalite();
-        evaluer();
-        genererDistances();
+    }
+
+    //  constructeur aléatoire de la solution
+    private void genereSolutionSemiDirige() {
+        boolean[][] compatibilite = instance.getCompatibilite();
+
+        boolean compatible;
+
+        ArrayList<Integer> imissionLibre;
+        ArrayList<Integer> imissionAttribue;
+
+        int inter;
+        boolean recommence = true;
+        while(recommence) {
+            imissionLibre = new ArrayList<>();
+            imissionAttribue = new ArrayList<>();
+
+            for (int i = 0; i < taille; i++)
+                imissionLibre.add(i);
+            Collections.shuffle(imissionLibre);
+
+            for (int i1 : imissionLibre) {
+                compatible = true;
+                if (i1 < instance.getI_fCodage())
+                    inter = rand.nextInt(instance.getI_iCodage());
+                else inter = instance.getI_iDouble() + rand.nextInt(max_value - instance.getI_iDouble());
+
+                // pour chaque mission attribuee
+                for (int i2 : imissionAttribue) {
+                    if (genes[i2] == inter) {
+                        // test de compatibilité planning
+                        if (!compatibilite[i1][i2]) {
+                            compatible = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (compatible) {
+                    imissionAttribue.add(i1);
+                    genes[i1] = inter;
+                }
+            }
+            // necessaire, car on fait la preselection uniquement sur les competences et la compatibilité des horaires
+            recommence = !this.valide();
+        }
     }
 
     // constructeur par recopie
     public Chromosome(Chromosome c) {
+        this.rand = new Random();
         this.genes = new int[c.taille];
-        for(int i=0; i<c.taille; i++)
-            this.genes[i] = c.genes[i];
+        System.arraycopy(c.genes, 0, this.genes, 0, c.taille);
         this.taille = c.taille;
         this.max_value = c.max_value;
         this.fitness = c.fitness;
         this.instance = c.instance;
         this.distances = new float[c.max_value];
-        for(int i=0; i<c.max_value; i++)
-            this.distances[i] = c.distances[i];
+        System.arraycopy(c.distances, 0, this.distances, 0, c.max_value);
         this.penalite = c.penalite;
     }
 
@@ -227,7 +273,8 @@ public class Chromosome {
     }
 
     public void evaluer() {
-        float moy = 0;
+        calculerPenalite();
+        float moy;
         float somme = 0;
         for (float distance : distances)
             somme += distance;
@@ -247,16 +294,6 @@ public class Chromosome {
     //   Elle doit etre lancée à la creation des solution et apres
     //   l'exécution des operateurs de mutation et de croisement
 
-
-    public boolean egal(Chromosome c) {
-        if (this == c) return true;
-        if (c == null || getClass() != c.getClass()) return false;
-        for (int i=0; i < this.taille; i++) {
-            if (genes[i] != c.genes[i]) return false;
-        }
-        return true;
-    }
-
     public double getFitness() {
         return fitness;
     }
@@ -269,54 +306,7 @@ public class Chromosome {
         genes[i] = value;
     }
 
-    // opérateur de croisement compatible avec le planning
-    public void croisementPC(Chromosome enfant2) {
-        boolean[][] compatibilite = instance.getCompatibilite();
-
-        Chromosome enfant1 = this;
-
-        // copie des genes des parents
-        int[] c_p1 = enfant1.getGenes();
-        int[] c_p2 = enfant2.getGenes();
-
-        int nbEchange = rand.nextInt(taille /2);
-
-        ArrayList<Integer> imission = new ArrayList<>();
-
-        int[] genes2 = enfant2.getGenes();
-        for (int i=0; i < taille; i++)
-            imission.add(i);
-
-        int i; // indice de la mission tirée au sort
-        int j;
-        boolean compatible;
-
-        while (nbEchange > 0) {
-            i = imission.remove(rand.nextInt(imission.size()));
-            compatible = true;
-
-            // pour chaque mission
-            j = 0;
-            while (compatible && j < taille) {
-                // test de selection de formation correspondant à l'interface de la formation tirée
-                if (genes[j] == genes2[i] || genes2[j] == genes[i]) {
-                    // test de compatibilité planning
-                    if (!compatibilite[j][i])
-                        compatible = false;
-                }
-                j++;
-            }
-            if (compatible) {
-                enfant1.setGene(i, c_p2[i]);
-                enfant2.setGene(i, c_p1[i]);
-            }
-            nbEchange --;
-        }
-    }
-
     public void affichageSolution() {
-        System.out.println("fitness = " + fitness + "\n");
-
         ArrayList<Formation> formations = instance.getFormations();
         ArrayList<Interface> interfaces = instance.getInterfaces();
 
@@ -348,7 +338,8 @@ public class Chromosome {
                     formation.affichageTableau();
                 }
             }
-        };
+        }
+        System.out.println("fitness = " + fitness + "\n");
     }
 
     // OPERATEURS DE MUTATION
@@ -359,50 +350,98 @@ public class Chromosome {
         genes[gene2] = inter;
     }
 
-    public void echange_2_genes_consecutifs() {
-        // on sélectionne un gène aléatoirement entre le premier et l'avant dernier
-        // Rappel : rand.nextInt(taille-1) retourne un entier aléatoire compris entre 0 et taille-2
-        int i = rand.nextInt(taille-1);
-
-        // on échange le gène sélectionné aléatoirement avec le gène suivant
-        echange_2_genes(i, i+1);
-    }
-
     void echange_2_genes_quelconques() {
-        int i = rand.nextInt(taille-1);
-        int j = rand.nextInt(taille-1);
+        boolean[][] compatibilite = instance.getCompatibilite();
 
-        // on échange les deux  gènes séléctionnés aléatoirement
-        echange_2_genes(i, j);
-    }
+        int i1 = rand.nextInt(taille); // indice de la mission tirée au sort
+        boolean compatible = true;
 
-    void deplacement_1_gene() {
-        int i = rand.nextInt(taille-1);
-        int j = rand.nextInt(taille-1);
+        ArrayList<Integer> imission = new ArrayList<>();
+        for (int i=0; i < taille; i++)
+            imission.add(i);
+        imission.remove(i1);
+        Collections.shuffle(imission);
 
-        int imin = min(i,j);
-        int imax = max(i,j);
+        int i2; // indice de la deuxieme mission
+        int k;
 
-        int inter = genes[imin];
-
-        while(imin<imax) {
-            genes[imin] = genes[imin + 1];
-            imin++;
+        while (compatible && !imission.isEmpty()) {
+            i2 = imission.remove(0);
+            // pour chaque mission
+            k = 0;
+            while (compatible && k < taille) {
+                // test de selection des formations correspondant à l'interface de la formation tirée
+                if (genes[k] == genes[i1]) {
+                    // test de compatibilité planning
+                    if (!compatibilite[k][i1])
+                        compatible = false;
+                }
+                // test de selection des formations correspondant à l'interface de la deuxieme formation tirée
+                if (genes[k] == genes[i2]) {
+                    // test de compatibilité planning
+                    if (!compatibilite[k][i2])
+                        compatible = false;
+                }
+                k++;
+            }
+            if (compatible) {
+                echange_2_genes(i1, i2);
+            }
         }
-        genes[imax] =  inter;
     }
 
-    void inversion_sequence_genes() {
-        int i = rand.nextInt(taille-1);
-        int j = rand.nextInt(taille-1);
+    // on decide arbitrairement x < taille/5 afin de limiter la complexité
+    void echange_x_genes_quelconques() {
+        int x = rand.nextInt(taille); // indice de la mission tirée au sort
+        while (x > 0) {
+            echange_2_genes_quelconques();
+            x--;
+        }
+    }
 
-        int imin = min(i,j);
-        int imax = max(i,j);
+    // OPERATEURS DE CROISEMENT
+    // opérateur de croisement compatible avec le planning
+    public void croisementPC(Chromosome enfant2) {
+        boolean[][] compatibilite = instance.getCompatibilite();
 
-        while(imin<imax) {
-            genes[imin] = genes[imax];
-            imax--;
-            imin++;
+        Chromosome enfant1 = this;
+
+        // copie des genes des parents
+        int[] c_p1 = enfant1.getGenes();
+        int[] c_p2 = enfant2.getGenes();
+
+        int nbEchange = rand.nextInt(taille /2);
+
+        ArrayList<Integer> imission = new ArrayList<>();
+        for (int i=0; i < taille; i++)
+            imission.add(i);
+
+        int[] genes2 = enfant2.getGenes();
+
+        int i; // indice de la mission tirée au sort
+        int j;
+        boolean compatible;
+
+        while (nbEchange > 0) {
+            i = imission.remove(rand.nextInt(imission.size()));
+            compatible = true;
+
+            // pour chaque mission
+            j = 0;
+            while (compatible && j < taille) {
+                // test de selection de formation correspondant à l'interface de la formation tirée
+                if (genes[j] == genes2[i] || genes2[j] == genes[i]) {
+                    // test de compatibilité planning
+                    if (!compatibilite[j][i])
+                        compatible = false;
+                }
+                j++;
+            }
+            if (compatible) {
+                enfant1.setGene(i, c_p2[i]);
+                enfant2.setGene(i, c_p1[i]);
+            }
+            nbEchange --;
         }
     }
 }

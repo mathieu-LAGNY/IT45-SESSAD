@@ -8,31 +8,29 @@ import java.util.*;
  */
 public class JavaIG {
 
-    public static int NBR_APPRENANTS = 20*4;
-    public static int NBR_FORMATIONS_PAR_SEMAINE = 1;
+    public int NBR_APPRENANTS = 20*4;
+    public int NBR_FORMATIONS_PAR_SEMAINE = 1;
 
-    public static int DIMENSION_ZONE_GEOGRAPHIQUE = 200;
+    public int DIMENSION_ZONE_GEOGRAPHIQUE = 200;
 
-    public static int NBR_INTERFACES = (int) (NBR_APPRENANTS/4 * 1.2);
-    public static int NBR_FORMATIONS = NBR_APPRENANTS * NBR_FORMATIONS_PAR_SEMAINE;
-
-    public static String FILENAME = "instance-" + NBR_FORMATIONS + "formations.c";
+    public int NBR_INTERFACES = (int) (NBR_APPRENANTS/4 * 1.2);
+    public int NBR_FORMATIONS = NBR_APPRENANTS * NBR_FORMATIONS_PAR_SEMAINE;
 
     public static int NBR_COMPETENCES = 2;
-    public static ArrayList<String> NOMS_COMPETENCES = new ArrayList<String>(Arrays.asList(
+    public static ArrayList<String> NOMS_COMPETENCES = new ArrayList<>(Arrays.asList(
             "SIGNES",
             "CODAGE"));
 
     public static int NBR_CENTRES_FORMATION = 5;
     public static int NBR_SPECIALITES = NBR_CENTRES_FORMATION;
-    public static ArrayList<String> NOMS_SPECIALITES = new ArrayList<String>(Arrays.asList(
+    public static ArrayList<String> NOMS_SPECIALITES = new ArrayList<>(Arrays.asList(
             "MENUISERIE",
             "ELECTRICITE",
             "MECANIQUE",
             "INFORMATIQUE",
             "CUISINE"));
 
-    public static ArrayList<String> JOURS_SEMAINE = new ArrayList<String>(Arrays.asList(
+    public static ArrayList<String> JOURS_SEMAINE = new ArrayList<>(Arrays.asList(
             "LUNDI",
             "MARDI",
             "MERCREDI",
@@ -72,6 +70,23 @@ public class JavaIG {
         trierInterfaces();
         trierFormations();
         createCompatibilite();
+    }
+
+    public JavaIG(int NBR_APPRENANTS) {
+        this.NBR_APPRENANTS = NBR_APPRENANTS;
+        rand = new Random();
+        interfaces = new ArrayList<>();
+        formations = new ArrayList<>();
+        coord = new float[NBR_CENTRES_FORMATION+1][2];
+        compatibilite = new boolean[NBR_FORMATIONS][NBR_FORMATIONS];
+
+        createInterfaces();
+        coordCentresEtSESSAD();
+        createFormations();
+        trierInterfaces();
+        trierFormations();
+        createCompatibilite();
+
     }
 
     // competences des interfaces en SIGNES et CODAGE
@@ -210,7 +225,7 @@ public class JavaIG {
         System.out.println("Interfaces : " + NBR_INTERFACES + " = " + interfaces.size());
         for (Interface inter: interfaces)
             System.out.println(inter);
-        System.out.println("Formations : " + NBR_FORMATIONS + " = " + formations.size());
+        System.out.println("\nFormations : " + NBR_FORMATIONS + " = " + formations.size());
         for (Formation f: formations)
             f.affichageTableau();
     }
@@ -225,11 +240,11 @@ public class JavaIG {
 
     // on part du principe que les valeurs des tableaux ne doivent pas être modifiés en utilisant un getter
     protected ArrayList<Interface> getInterfaces() {
-        return new ArrayList<Interface>(interfaces);
+        return new ArrayList<>(interfaces);
     }
 
     protected ArrayList<Formation> getFormations() {
-        return new ArrayList<Formation>(formations);
+        return new ArrayList<>(formations);
     }
 
     public boolean[][] getCompatibilite() {
@@ -239,7 +254,7 @@ public class JavaIG {
     protected ArrayList<ArrayList<Float>> getCoord() {
         ArrayList<ArrayList<Float>> copy = new ArrayList<>();
         for (float[] duo: coord)
-            copy.add(new ArrayList<Float>(Arrays.asList(duo[0], duo[1])));
+            copy.add(new ArrayList<>(Arrays.asList(duo[0], duo[1])));
         return copy;
     }
 
